@@ -40,6 +40,6 @@ Run the following script to confirm that the MCPToolkit is correctly installed a
 
 ```bash
 python - <<EOF
-from langchain_mcp_adapters import MCPToolkit
+from langchain_mcp_adapters.toolkits import MCPToolkit
 print("MCP adapter installed successfully")
 ```
