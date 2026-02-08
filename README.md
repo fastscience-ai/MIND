@@ -39,8 +39,21 @@ pip install git+https://github.com/langchain-ai/langchain-mcp-adapters.git
 Run the following script to confirm that the MCPToolkit is correctly installed and accessible.
 
 ```bash
-python - <<EOF
-from langchain_mcp_adapters.toolkits import MCPToolkit
-print("MCP adapter installed successfully")
+python - <<'EOF'
+import asyncio
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+async def main():
+    client = MultiServerMCPClient({
+        "sevennet": {
+            "transport": "stdio",
+            "command": "python",
+            "args": ["/ABS/PATH/TO/sevennet_mcp_server.py"],
+        }
+    })
+    tools = await client.get_tools()
+    print("Loaded tools:", [t.name for t in tools])
+
+asyncio.run(main())
 EOF
 ```
