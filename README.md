@@ -32,7 +32,7 @@ pip install jupyterlab
 Install the adapter library required to connect LangChain to MCP servers.
 
 ```bash
-pip install langchain-mcp-adapters
+pip install git+https://github.com/langchain-ai/langchain-mcp-adapters.git
 ```
 
 ### 4. Verify Installation
