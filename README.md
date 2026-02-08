@@ -33,6 +33,7 @@ Install the adapter library required to connect LangChain to MCP servers.
 
 ```bash
 pip install -U langchain langchain-core langchain-openai langchain-community openai
+pip install wikipedia
 pip install git+https://github.com/langchain-ai/langchain-mcp-adapters.git
 ```
 
