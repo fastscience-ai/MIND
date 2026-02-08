@@ -28,10 +28,11 @@ Install JupyterLab to provide an interactive environment for testing your LangCh
 pip install jupyterlab
 ```
 
-## 3. Install langchain-mcp-adapters
+## 3. Install langchain and langchain-mcp-adapters
 Install the adapter library required to connect LangChain to MCP servers.
 
 ```bash
+pip install -U langchain langchain-core langchain-openai 
 pip install git+https://github.com/langchain-ai/langchain-mcp-adapters.git
 ```
 
