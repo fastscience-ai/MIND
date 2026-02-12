@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+
+# Local data (user PDFs and memory – don’t commit)
+local_pdfs/*.pdf
+memory/*.jsonl
+
+# Outputs
+outputs/
