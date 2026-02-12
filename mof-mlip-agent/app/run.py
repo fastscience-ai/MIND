@@ -62,7 +62,7 @@ def main():
     exp_id = make_exp_id("mof")
 
     # Compile the LangGraph that encodes the agent's control flow.
-    app = build_graph(llm, arxiv_max_docs=cfg.arxiv_max_docs)
+    app = build_graph(llm, arxiv_max_docs=cfg.arxiv_max_docs, fast_mode=cfg.fast_mode)
 
     # Initial graph state. Nodes incrementally fill in these fields.
     state = {

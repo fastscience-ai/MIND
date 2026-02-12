@@ -32,6 +32,9 @@ class AppConfig(BaseModel):
     memory_max_items: int = Field(default=50)          # how many to keep on disk (soft)
     memory_retrieve_k: int = Field(default=5)          # how many to inject into prompts
 
+    # Fast mode: skip arXiv, use less memory context, optional skip of novelty step
+    fast_mode: bool = Field(default=False)
+
 
 def load_config() -> AppConfig:
     """
@@ -44,6 +47,7 @@ def load_config() -> AppConfig:
       - MEMORY_FILE          : str,   default "memory/memory_store.jsonl"
       - MEMORY_MAX_ITEMS     : int,   default "50"
       - MEMORY_RETRIEVE_K    : int,   default "5"
+      - FAST_MODE            : "1" or "0", default "0" (faster: less context, skip arXiv, skip novelty)
 
     Note: the model name is intentionally pinned to gpt-4.1-mini in code.
     """
@@ -52,12 +56,14 @@ def load_config() -> AppConfig:
     # so OPENAI_MODEL overrides don't accidentally select a heavy model.
     model = "gpt-4.1-mini"
     temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.0"))
-    arxiv_max_docs = int(os.getenv("ARXIV_MAX_DOCS", "6"))
+    fast_mode = os.getenv("FAST_MODE", "0").strip().lower() in ("1", "true", "yes")
+    # In fast mode: no arXiv, minimal memory context
+    arxiv_max_docs = 0 if fast_mode else int(os.getenv("ARXIV_MAX_DOCS", "6"))
     output_dir = os.getenv("OUTPUT_DIR", "outputs")
 
     memory_file = os.getenv("MEMORY_FILE", "memory/memory_store.jsonl")
     memory_max_items = int(os.getenv("MEMORY_MAX_ITEMS", "50"))
-    memory_retrieve_k = int(os.getenv("MEMORY_RETRIEVE_K", "5"))
+    memory_retrieve_k = 1 if fast_mode else int(os.getenv("MEMORY_RETRIEVE_K", "5"))
 
     return AppConfig(
         openai_model=model,
@@ -67,4 +73,5 @@ def load_config() -> AppConfig:
         memory_file=memory_file,
         memory_max_items=memory_max_items,
         memory_retrieve_k=memory_retrieve_k,
+        fast_mode=fast_mode,
     )

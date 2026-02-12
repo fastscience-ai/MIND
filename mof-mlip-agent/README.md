@@ -55,6 +55,21 @@ for RAG and model configuration):
 bash run.sh "Your scientific research query in quotes"
 ```
 
+### Run faster (fewer API calls, less context)
+
+Set `FAST_MODE=1` to reduce latency:
+
+- Skips arXiv retrieval (no external calls).
+- Uses minimal memory context (1 past run).
+- Skips the novelty-check LLM step and goes straight to spec generation (saves one round-trip).
+
+```bash
+export FAST_MODE=1
+bash run.sh "Your scientific research query in quotes"
+```
+
+Or add `export FAST_MODE=1` to `run.sh` if you usually want fast runs.
+
 ## 5) Check Output
 
 - ./outputs/<exp_id>.json

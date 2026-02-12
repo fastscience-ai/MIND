@@ -30,6 +30,9 @@ from app.tools.local_rag import local_rag_search
 # exact tokens to keep implementation simple.
 MAX_LITERATURE_CHARS = 15000
 MAX_LOCAL_CTX_CHARS = 8000
+# Tighter limits when fast_mode is enabled (smaller prompts = faster API round-trips)
+MAX_LITERATURE_CHARS_FAST = 5000
+MAX_LOCAL_CTX_CHARS_FAST = 3000
 
 
 class AgentState(TypedDict):
@@ -46,7 +49,7 @@ class AgentState(TypedDict):
     reject_reason: str
 
 
-def build_graph(llm: ChatOpenAI, arxiv_max_docs: int):
+def build_graph(llm: ChatOpenAI, arxiv_max_docs: int, fast_mode: bool = False):
     """
     Construct and compile the LangGraph state machine for the agent.
 
@@ -56,7 +59,13 @@ def build_graph(llm: ChatOpenAI, arxiv_max_docs: int):
         ChatOpenAI instance used by all chains.
     arxiv_max_docs:
         Upper bound on the number of arXiv documents to load per run.
+    fast_mode:
+        If True, use smaller context limits and skip the novelty LLM call
+        (go straight from retrieve to spec) for faster runs.
     """
+    max_lit = MAX_LITERATURE_CHARS_FAST if fast_mode else MAX_LITERATURE_CHARS
+    max_local = MAX_LOCAL_CTX_CHARS_FAST if fast_mode else MAX_LOCAL_CTX_CHARS
+
     intent_chain = build_intent_chain(llm)
     canon_chain = build_canonicalize_chain(llm)
     novelty_chain = build_novelty_chain(llm)
@@ -111,12 +120,21 @@ def build_graph(llm: ChatOpenAI, arxiv_max_docs: int):
             pass  # Continue with lit = ""; novelty will see "(no results)"
 
         if lit:
-            lit = lit[:MAX_LITERATURE_CHARS]
+            lit = lit[:max_lit]
 
         local_ctx, _refs = local_rag_search(canonical)
         if local_ctx:
-            local_ctx = local_ctx[:MAX_LOCAL_CTX_CHARS]
-        return {"literature_text": lit, "local_ctx": local_ctx}
+            local_ctx = local_ctx[:max_local]
+
+        out: dict = {"literature_text": lit, "local_ctx": local_ctx}
+        if fast_mode:
+            # Skip novelty LLM call: inject a pass verdict so spec step has something to read
+            out["novelty"] = NoveltyVerdict(
+                status="pass",
+                rationale="(fast mode: novelty check skipped)",
+                top_refs=[],
+            )
+        return out
 
     def step_novelty(state: AgentState):
         """
@@ -133,6 +151,10 @@ def build_graph(llm: ChatOpenAI, arxiv_max_docs: int):
         })
         reject_reason = novelty.rationale if novelty.status == "reject" else ""
         return {"novelty": novelty, "reject_reason": reject_reason}
+
+    def route_after_retrieve(state: AgentState):
+        """In fast mode skip the novelty node and go straight to spec."""
+        return "spec" if fast_mode else "novelty"
 
     def route_after_novelty(state: AgentState):
         """
@@ -171,7 +193,7 @@ def build_graph(llm: ChatOpenAI, arxiv_max_docs: int):
     g.set_entry_point("intent")
     g.add_edge("intent", "canonicalize")
     g.add_edge("canonicalize", "retrieve")
-    g.add_edge("retrieve", "novelty")
+    g.add_conditional_edges("retrieve", route_after_retrieve, {"novelty": "novelty", "spec": "spec"})
     g.add_conditional_edges("novelty", route_after_novelty, {"reject": END, "spec": "spec"})
     g.add_edge("spec", END)
 
