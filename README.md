@@ -9,7 +9,7 @@ This guide explains how to set up a Conda environment, install JupyterLab, and i
 If you already have a suitable environment, you can skip this step.
 
 ```bash
-conda create -n mcp python=3.10 -y
+conda create -n mcp python=3.12 -y
 conda activate mcp
 ```
 
