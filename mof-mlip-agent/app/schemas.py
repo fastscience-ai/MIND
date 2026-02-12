@@ -50,10 +50,11 @@ class ExperimentSpec(BaseModel):
     query_original: str
     query_canonical: str
 
-    structure: Dict[str, Any]
-    calculator: Dict[str, Any]
-    task: Dict[str, Any]
-    postprocess: Dict[str, Any]
+    # Optional with defaults so parsing succeeds when the LLM omits nested objects (e.g. with function_calling).
+    structure: Dict[str, Any] = Field(default_factory=dict, description="Structure id, format, path.")
+    calculator: Dict[str, Any] = Field(default_factory=dict, description="Engine, model, precision.")
+    task: Dict[str, Any] = Field(default_factory=dict, description="Task type and parameters.")
+    postprocess: Dict[str, Any] = Field(default_factory=dict, description="Outputs and save_trajectory.")
+    novelty_check: Dict[str, Any] = Field(default_factory=dict, description="Status and top_refs.")
 
-    novelty_check: Dict[str, Any]
-    notes: str
+    notes: str = Field(..., description="Short specific notes.")

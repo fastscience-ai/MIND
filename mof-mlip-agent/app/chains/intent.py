@@ -48,7 +48,7 @@ def build_intent_chain(llm: ChatOpenAI):
         {"query": str, "memory_context": str}
     and returns a structured QueryIntent.
     """
-    return PROMPT | llm.with_structured_output(QueryIntent)
+    return PROMPT | llm.with_structured_output(QueryIntent, method="function_calling")
 
 
 def intent_to_jsonable(intent: QueryIntent) -> dict:

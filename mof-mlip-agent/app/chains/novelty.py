@@ -52,4 +52,4 @@ def build_novelty_chain(llm: ChatOpenAI):
         {"canonical": str, "memory_context": str, "lit": str, "local_ctx": str}
     -> NoveltyVerdict
     """
-    return PROMPT | llm.with_structured_output(NoveltyVerdict)
+    return PROMPT | llm.with_structured_output(NoveltyVerdict, method="function_calling")

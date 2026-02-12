@@ -56,7 +56,7 @@ def build_canonicalize_chain(llm: ChatOpenAI):
         {"query": str, "intent_json": dict, "memory_context": str}
     -> CanonicalQuery
     """
-    return PROMPT | llm.with_structured_output(CanonicalQuery)
+    return PROMPT | llm.with_structured_output(CanonicalQuery, method="function_calling")
 
 
 def intent_to_jsonable(intent: QueryIntent) -> dict:

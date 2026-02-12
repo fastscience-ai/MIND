@@ -60,7 +60,7 @@ def build_spec_chain(llm: ChatOpenAI):
         }
     -> ExperimentSpec
     """
-    return PROMPT | llm.with_structured_output(ExperimentSpec)
+    return PROMPT | llm.with_structured_output(ExperimentSpec, method="function_calling")
 
 
 def novelty_to_jsonable(n: NoveltyVerdict) -> dict:
