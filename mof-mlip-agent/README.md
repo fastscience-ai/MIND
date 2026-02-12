@@ -131,3 +131,55 @@ High-level layout of the MOF MLIP Agent package:
 - `outputs/`  
   Default directory for generated JSON experiment specs.
 
+## 7) System workflow
+
+When you execute:
+
+```bash
+python -m app.run "Compute a geometry relaxation for UiO-66 using an ML interatomic potential. Use fmax 0.05 eV/Å and max 500 steps. Return a JSON experiment spec for SevenNet."
+```
+
+the following happens in order.
+
+1. **Startup**  
+   Config is loaded, `OPENAI_API_KEY` is checked, and a unique experiment ID (e.g. `mof-20260212-1234`) is generated. Past runs are read from the memory store and the top‑k similar entries are formatted into a short **memory context** string.
+
+2. **Intent** (1st LLM call)  
+   Your raw query and the memory context are sent to the LLM. It returns a structured **QueryIntent**: MOF name (e.g. UiO-66), goal, task type (e.g. relaxation), missing inputs, and whether the request is MLIP‑feasible.
+
+3. **Canonicalize** (2nd LLM call)  
+   The original query plus the intent (as JSON) and memory context are sent to the LLM. It returns a **CanonicalQuery**: a single, precise sentence suitable for search and spec generation (e.g. “Perform a geometry relaxation of UiO-66 with fmax 0.05 eV/Å, max 500 steps, output a JSON spec for SevenNet.”).
+
+4. **Retrieve** (no LLM)  
+   - **arXiv:** The canonical query is sent to the arXiv API; up to `arxiv_max_docs` results are fetched and compacted into a **literature text** block. If the API fails (e.g. 500/429), this block is left empty and the run continues.  
+   - **Local PDFs:** The canonical query is used to search PDFs in `local_pdfs/` (PyMuPDF). Top‑matching chunks become **local context**.  
+   Both are trimmed to a maximum length to keep prompts manageable.
+
+5. **Novelty** (3rd LLM call)  
+   The canonical question, memory context, literature text (arXiv), and local context (PDFs) are sent to the LLM. It returns a **NoveltyVerdict**: pass / reject / uncertain, with a short rationale and optional references.  
+   - If **reject**: the run prints the verdict, appends a memory record, and exits without writing a spec.  
+   - If **pass** or **uncertain**: the run continues to the next step.
+
+6. **Spec** (4th LLM call)  
+   The original and canonical queries, memory context, novelty verdict (as JSON), and experiment ID are sent to the LLM. It returns a structured **ExperimentSpec** (structure, calculator, task, postprocess, notes, etc.).
+
+7. **Finish**  
+   The spec is written to `outputs/<exp_id>.json`, and a memory record (query, verdict, task type, etc.) is appended so future runs can reuse this history.
+
+**Summary (normal mode):** 4 LLM calls (intent → canonicalize → novelty → spec), plus one arXiv fetch and one local PDF search. Novelty is decided by the LLM using the retrieved literature and local context.
+
+---
+
+### What is different with fast mode?
+
+When `FAST_MODE=1` (e.g. `export FAST_MODE=1` before the same command):
+
+| Step            | Normal mode                          | Fast mode |
+|----------------|--------------------------------------|-----------|
+| Memory context | Top‑k past runs (default k=5)        | Only 1 past run (k=1) |
+| Retrieve       | arXiv + local PDF search              | **No arXiv** (literature text empty); local PDF search still runs. Shorter caps on literature/local text (5000 / 3000 chars). |
+| Novelty        | **LLM call** with lit + local_ctx    | **Skipped.** A synthetic “pass” verdict is injected; no 3rd LLM call. |
+| Spec           | 4th LLM call                         | 3rd (and final) LLM call. |
+
+So with fast mode you get **3 LLM calls** (intent → canonicalize → spec), no arXiv call, less memory in the prompt, and smaller context limits. The run is faster and uses fewer tokens; novelty is not evaluated by the model (everything is treated as pass).
+
