@@ -1,0 +1,35 @@
+{
+  "exp_id": "mof-20260212-9134",
+  "query_original": "Compute a geometry relaxation for UiO-66 using an ML interatomic potential. Use fmax 0.05 eV/Å and max 500 steps. Return a JSON experiment spec for SevenNet.",
+  "query_canonical": "Perform a geometry relaxation of the UiO-66 metal-organic framework using a machine learning interatomic potential. Use a force convergence criterion (fmax) of 0.05 eV/Å and a maximum of 500 optimization steps. Provide the experiment specification in JSON format compatible with the SevenNet MLIP platform.",
+  "structure": {
+    "id": "UiO-66",
+    "format": "cif",
+    "path": "/path/to/UiO-66_structure.cif"
+  },
+  "calculator": {
+    "engine": "SevenNet",
+    "model": "MLIP",
+    "precision": "default"
+  },
+  "task": {
+    "type": "relaxation",
+    "parameters": {
+      "fmax": 0.05,
+      "max_steps": 500
+    }
+  },
+  "postprocess": {
+    "outputs": [
+      "relaxed_structure",
+      "energy",
+      "forces"
+    ],
+    "save_trajectory": true
+  },
+  "novelty_check": {
+    "status": "pass",
+    "top_refs": []
+  },
+  "notes": "Geometry relaxation of UiO-66 MOF using SevenNet MLIP with fmax=0.05 eV/Å and max 500 steps. Placeholder structure path used."
+}

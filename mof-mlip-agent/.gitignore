@@ -6,9 +6,5 @@ __pycache__/
 venv/
 .env
 
-# Local data (user PDFs and memory – don’t commit)
-local_pdfs/*.pdf
+# Memory store (do not commit user data)
 memory/*.jsonl
-
-# Outputs
-outputs/
