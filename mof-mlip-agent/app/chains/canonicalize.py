@@ -10,9 +10,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from app.schemas import CanonicalQuery, QueryIntent
 
 
-SYSTEM = """You are a MOF MLIP query canonicalizer.
+SYSTEM = """You are a MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) query canonicalizer.
 You receive:
-- The user's original free-form query about a MOF MLIP experiment.
+- The user's original free-form query about a MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) experiment.
 - A parsed intent object (JSON) describing what the user wants.
 - PAST_RUN memory providing prior canonical queries and specs.
 
@@ -20,10 +20,10 @@ Your job:
 - Rewrite the query into a precise, unambiguous canonical form suitable for:
   - literature search
   - RAG over local simulation specs
-  - MLIP experiment specification
+  - MLIP(Machine Learning interatomic Potential) experiment specification
 - Keep only essential details (structure, task type, key conditions).
 - Remove chit-chat and redundant wording.
-- If the intent is not MLIP-feasible, still produce the "closest" MLIP-feasible canonical question.
+- If the intent is not MLIP(Machine Learning interatomic Potential)-feasible, still produce the "closest" MLIP(Machine Learning interatomic Potential)-feasible canonical question.
 
 All output must be English only.
 Return a strict structured CanonicalQuery object.
@@ -41,8 +41,8 @@ PAST_RUN memory (may be empty):
 {memory_context}
 
 Rewrite the original query into a single canonical experimental question that:
-- is as specific as possible about the MOF/structure
-- clearly states the MLIP task (e.g., relaxation, singlepoint, adsorption_energy, defect_energy)
+- is as specific as possible about the MoF(Metal-organic Framework)/structure
+- clearly states the MLIP(Machine Learning interatomic Potential) task (e.g., relaxation, singlepoint, adsorption_energy, defect_energy)
 - notes key numerical parameters when present (cutoffs, fmax, steps, etc.)
 
 Return only a structured CanonicalQuery.

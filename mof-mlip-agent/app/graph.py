@@ -1,5 +1,5 @@
 """
-Construction of the LangGraph state machine for the MOF MLIP Agent.
+Construction of the LangGraph state machine for the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
 The graph orchestrates the following high-level steps:
 1. intent        – parse the free-form query into a structured QueryIntent.
@@ -85,7 +85,7 @@ def build_graph(llm: ChatOpenAI, arxiv_max_docs: int, fast_mode: bool = False):
     def step_canonicalize(state: AgentState):
         """
         Second node: canonicalise the free-form query into a precise,
-        MLIP-ready CanonicalQuery, taking the parsed intent into account.
+        MLIP(Machine Learning interatomic Potential)-ready CanonicalQuery, taking the parsed intent into account.
         """
         intent = state["intent"]
         canonical = canon_chain.invoke({

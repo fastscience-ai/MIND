@@ -1,5 +1,5 @@
 """
-Configuration model and loader for the MOF MLIP Agent.
+Configuration model and loader for the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
 All runtime configuration is funneled through the AppConfig Pydantic model,
 which makes it easy to reason about and document environment variables.

@@ -1,5 +1,5 @@
 """
-Chain responsible for novelty checking of proposed MOF MLIP experiments.
+Chain responsible for novelty checking of proposed MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) experiments.
 
 Given a canonical question, memory context, and retrieved literature /
 local RAG snippets, the chain returns a NoveltyVerdict describing whether
@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from app.schemas import NoveltyVerdict
 
 
-SYSTEM = """You are a novelty gate for MLIP-based MOF hypotheses.
+SYSTEM = """You are a novelty gate for MLIP(Machine Learning interatomic Potential)-based MoF(Metal-organic Framework) hypotheses.
 Given a canonical experimental question and retrieved literature snippets,
 decide:
 - reject: if the same claim/experiment appears already established with high confidence

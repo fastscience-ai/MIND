@@ -8,10 +8,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from app.schemas import ExperimentSpec, NoveltyVerdict
 
 
-SYSTEM = """You generate an MLIP experiment JSON spec for MOF calculations.
+SYSTEM = """You generate an MLIP(Machine Learning interatomic Potential) experiment JSON spec for MoF(Metal-organic Framework) calculations.
 You also receive PAST_RUN memory to keep formatting and assumptions consistent across runs.
 
-Assume an MLIP engine like SevenNet. You must output a structured ExperimentSpec only.
+Assume an MLIP(Machine Learning interatomic Potential) engine like SevenNet. You must output a structured ExperimentSpec only.
 English only.
 
 Rules:

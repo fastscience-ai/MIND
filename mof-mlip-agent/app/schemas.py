@@ -1,5 +1,5 @@
 """
-Pydantic data models shared across the MOF MLIP Agent.
+Pydantic data models shared across the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
 These schemas define the structured inputs and outputs for each reasoning
 stage (intent parsing, canonicalisation, novelty checking, and spec
@@ -12,15 +12,15 @@ from typing import List, Literal, Optional, Dict, Any
 
 
 class QueryIntent(BaseModel):
-    mof_name: Optional[str] = Field(default=None, description="MOF name if mentioned (e.g., UiO-66).")
+    mof_name: Optional[str] = Field(default=None, description="MoF(Metal-organic Framework) name if mentioned (e.g., UiO-66).")
     goal: str = Field(..., description="The core hypothesis or objective stated by the user.")
     task_hint: Optional[Literal["relaxation", "singlepoint", "adsorption_energy", "defect_energy"]] = Field(
         default=None,
-        description="Best guess of MLIP-verifiable task type."
+        description="Best guess of MLIP(Machine Learning interatomic Potential)-verifiable task type."
     )
     required_inputs: List[str] = Field(
         default_factory=list,
-        description="Missing information needed to run an MLIP experiment (e.g., CIF path, adsorbate)."
+        description="Missing information needed to run an MLIP(Machine Learning interatomic Potential) experiment (e.g., CIF path, adsorbate)."
     )
     ambiguity_flags: List[str] = Field(
         default_factory=list,
@@ -28,11 +28,11 @@ class QueryIntent(BaseModel):
     )
     feasibility: Literal["feasible", "needs_clarification", "not_mlip_verifiable"] = Field(
         ...,
-        description="Whether the query can be verified with MLIP as-is."
+        description="Whether the query can be verified with MLIP(Machine Learning interatomic Potential) as-is."
     )
 
 class CanonicalQuery(BaseModel):
-    query_canonical: str = Field(..., description="Rewritten query that is MLIP-verifiable and testable.")
+    query_canonical: str = Field(..., description="Rewritten query that is MLIP(Machine Learning interatomic Potential)-verifiable and testable.")
     clarifying_questions: List[str] = Field(default_factory=list, description="Questions to ask user if needed.")
 
 class PaperRef(BaseModel):

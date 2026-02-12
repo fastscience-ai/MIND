@@ -1,4 +1,4 @@
-# MOF MLIP Agent (LangChain + OpenAI)
+# MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent (LangChain + OpenAI)
 
 ## 1) Setup
 Create a venv and install dependencies:
@@ -36,7 +36,7 @@ Steps:
 mkdir -p local_pdfs
 ```
 
-2. Drop your MOF / MLIP related PDFs into that folder.
+2. Drop your MoF(Metal-organic Framework) / MLIP(Machine Learning interatomic Potential) related PDFs into that folder.
 
 During the `novelty` step, the agent will search these PDFs (using PyMuPDF)
 and pass the most relevant snippets to the LLM, reducing external token usage.
@@ -76,7 +76,7 @@ Or add `export FAST_MODE=1` to `run.sh` if you usually want fast runs.
   
 ## 6) Project structure
 
-High-level layout of the MOF MLIP Agent package:
+High-level layout of the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent package:
 
 - `app/`  
   Core Python package for the agent.
@@ -145,7 +145,7 @@ the following happens in order.
    Config is loaded, `OPENAI_API_KEY` is checked, and a unique experiment ID (e.g. `mof-20260212-1234`) is generated. Past runs are read from the memory store and the top‑k similar entries are formatted into a short **memory context** string.
 
 2. **Intent** (1st LLM call)  
-   Your raw query and the memory context are sent to the LLM. It returns a structured **QueryIntent**: MOF name (e.g. UiO-66), goal, task type (e.g. relaxation), missing inputs, and whether the request is MLIP‑feasible.
+   Your raw query and the memory context are sent to the LLM. It returns a structured **QueryIntent**: MoF(Metal-organic Framework) name (e.g. UiO-66), goal, task type (e.g. relaxation), missing inputs, and whether the request is MLIP(Machine Learning interatomic Potential)-feasible.
 
 3. **Canonicalize** (2nd LLM call)  
    The original query plus the intent (as JSON) and memory context are sent to the LLM. It returns a **CanonicalQuery**: a single, precise sentence suitable for search and spec generation (e.g. “Perform a geometry relaxation of UiO-66 with fmax 0.05 eV/Å, max 500 steps, output a JSON spec for SevenNet.”).

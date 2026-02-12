@@ -1,5 +1,5 @@
 """
-CLI entrypoint for the MOF MLIP Agent.
+CLI entrypoint for the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
 This module:
 - parses the user query from the command line,

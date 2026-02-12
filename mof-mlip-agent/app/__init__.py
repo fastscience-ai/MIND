@@ -1,5 +1,5 @@
 """
-Top-level package for the MOF MLIP Agent.
+Top-level package for the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
 This module re-exports a few commonly used utilities so that callers can write:
 
