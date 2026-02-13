@@ -1,14 +1,14 @@
 """
 CLI entrypoint for the MoF(Metal-organic Framework) MLIP(Machine Learning interatomic Potential) Agent.
 
-This module:
-- parses the user query from the command line,
-- loads application configuration,
-- initialises the OpenAI chat model,
-- wires up the LangGraph-based agent,
-- runs the full reasoning pipeline, and
-- writes the final JSON experiment specification to disk while
-  recording a memory entry for future runs.
+[For students] This file is the main entry point when you run:
+    python -m app.run "Your scientific research query"
+
+It (1) reads your query from the command line, (2) loads config and memory,
+(3) builds the LangGraph agent (intent → canonicalize → retrieve → novelty → spec),
+(4) runs the graph once, and (5) either writes a JSON experiment spec to disk
+or exits early if the novelty check rejects the idea. All steps are commented
+below so you can follow the flow.
 """
 
 import sys
@@ -30,41 +30,68 @@ def main():
     Usage (from project root):
         python -m app.run "Your scientific research query"
     """
+    # -------------------------------------------------------------------------
+    # Step 1: Parse the user's query from the command line
+    # -------------------------------------------------------------------------
+    # sys.argv[0] is the program name (e.g. "app.run"), sys.argv[1] is the first
+    # argument. We require exactly one argument: the natural-language query.
     if len(sys.argv) < 2:
         print("Usage: python -m app.run \"<your English query>\"")
         sys.exit(1)
 
-    # Take the first argument as the natural-language query the user typed.
     query_original = sys.argv[1].strip()
     if not query_original:
         print("Empty query.")
         sys.exit(1)
 
-    # Load configuration (model name, temperature, I/O paths, etc.).
+    # -------------------------------------------------------------------------
+    # Step 2: Load configuration from environment variables
+    # -------------------------------------------------------------------------
+    # cfg contains: openai_model, temperature, arxiv_max_docs, output_dir,
+    # memory_file, memory_max_items, memory_retrieve_k, fast_mode.
     cfg = load_config()
 
-    # Guardrail: ensure the OpenAI API key is present before constructing
-    # any client objects. This fails fast with a clear error message.
+    # -------------------------------------------------------------------------
+    # Step 3: Check that the OpenAI API key is set (required for all LLM calls)
+    # -------------------------------------------------------------------------
+    # Without this key, the ChatOpenAI client would fail later with a confusing
+    # error. We fail early with a clear message so the student knows what to do.
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is not set. Export it before running.")
 
-    # Create the chat model wrapper used by all chains.
+    # -------------------------------------------------------------------------
+    # Step 4: Create the LLM (Large Language Model) client
+    # -------------------------------------------------------------------------
+    # This single client is passed into the graph and used by every chain
+    # (intent, canonicalize, novelty, spec). temperature=0 keeps outputs deterministic.
     llm = ChatOpenAI(model=cfg.openai_model, temperature=cfg.temperature)
 
-    # Persistent memory:
-    # - retrieve: fetch top-k similar past runs to provide context
-    # - format_context: render them as a compact string for prompts
+    # -------------------------------------------------------------------------
+    # Step 5: Load "memory" from past runs and format it for the prompts
+    # -------------------------------------------------------------------------
+    # Memory is stored in a JSONL file. We retrieve the top-k runs that are most
+    # similar to the current query (by simple keyword overlap), then format
+    # them into one string (memory_context). The agent will see this string in
+    # each LLM prompt so it can stay consistent with previous experiments.
     mem = MemoryStore(path=cfg.memory_file, max_items=cfg.memory_max_items)
     retrieved = mem.retrieve(query_original, k=cfg.memory_retrieve_k)
     memory_context = mem.format_context(retrieved)
 
-    # Unique identifier for this experimental specification.
+    # -------------------------------------------------------------------------
+    # Step 6: Generate a unique experiment ID and build the agent graph
+    # -------------------------------------------------------------------------
+    # exp_id is used in the final JSON spec (e.g. "mof-20260212-1234").
+    # build_graph() returns a compiled LangGraph: a state machine that runs
+    # the nodes "intent" → "canonicalize" → "retrieve" → "novelty" (or skip) → "spec".
     exp_id = make_exp_id("mof")
-
-    # Compile the LangGraph that encodes the agent's control flow.
     app = build_graph(llm, arxiv_max_docs=cfg.arxiv_max_docs, fast_mode=cfg.fast_mode)
 
-    # Initial graph state. Nodes incrementally fill in these fields.
+    # -------------------------------------------------------------------------
+    # Step 7: Prepare the initial state for the graph
+    # -------------------------------------------------------------------------
+    # The graph runs by updating this state dict. We start with the user query
+    # and memory context filled in; all other fields (intent, canonical,
+    # literature_text, etc.) are filled by the graph nodes as they run.
     state = {
         "query_original": query_original,
         "memory_context": memory_context,
@@ -79,16 +106,25 @@ def main():
         "reject_reason": "",
     }
 
-    # Run the full agent graph synchronously and collect the final state.
+    # -------------------------------------------------------------------------
+    # Step 8: Run the full graph once (all nodes in sequence)
+    # -------------------------------------------------------------------------
+    # invoke() runs the graph until it reaches the END node. The returned "out"
+    # is the final state after every node has run (intent, canonical, novelty,
+    # spec, etc. are now populated).
     out = app.invoke(state)
 
     novelty = out.get("novelty")
     intent = out.get("intent")
     canonical = out.get("canonical")
 
-    # If the novelty gate rejects the experiment, print a human-readable
-    # explanation and persist a memory record so future runs can recognise
-    # that this hypothesis was already evaluated and rejected.
+    # -------------------------------------------------------------------------
+    # Step 9: If the novelty check rejected the experiment, print and save, then exit
+    # -------------------------------------------------------------------------
+    # The novelty node can return status "reject" if the idea is already in the
+    # literature or local PDFs. We print the rationale and top references, append
+    # a record to memory (so we remember this rejection next time), and exit
+    # without writing a spec file.
     if novelty and novelty.status == "reject":
         print("\nNOVELTY VERDICT: REJECT")
         print(novelty.rationale)
@@ -109,13 +145,18 @@ def main():
         })
         sys.exit(0)
 
-    # At this point we expect a concrete ExperimentSpec; if missing, treat as error.
+    # -------------------------------------------------------------------------
+    # Step 10: We passed the novelty check — get the generated spec and write it
+    # -------------------------------------------------------------------------
+    # The spec node should have produced an ExperimentSpec. If not, something
+    # went wrong (e.g. the LLM failed); we exit with an error code.
     spec = out.get("spec")
     if spec is None:
         print("No spec generated (unexpected).")
         sys.exit(2)
 
-    # Ensure the output directory exists, then write the JSON spec to disk.
+    # Create the output directory if it does not exist, then write the spec
+    # as a pretty-printed JSON file (e.g. outputs/mof-20260212-1234.json).
     ensure_dir(cfg.output_dir)
     path = os.path.join(cfg.output_dir, f"{spec.exp_id}.json")
     write_json(path, spec.model_dump())
@@ -124,9 +165,13 @@ def main():
     print("Wrote experiment spec to:", path)
     print("\nCanonical query:\n", spec.query_canonical)
 
-    # Store memory record for future runs, even for successful / passed
-    # experiments. This allows the agent to stay consistent over time
-    # and avoid regenerating very similar specifications.
+    # -------------------------------------------------------------------------
+    # Step 11: Save this run to memory for future runs
+    # -------------------------------------------------------------------------
+    # Even when we pass the novelty check, we append a summary of this run
+    # (query, verdict, task type, etc.) to the memory store. Next time the
+    # user asks something similar, the agent will see this run in memory_context
+    # and can avoid repeating the same spec or stay consistent.
     mem.append({
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "exp_id": spec.exp_id,
@@ -137,6 +182,7 @@ def main():
         "verdict_status": novelty.status if novelty else "pass",
         "verdict_rationale": novelty.rationale if novelty else "",
     })
+
 
 if __name__ == "__main__":
     main()
